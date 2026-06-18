@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>PharmaPrédict</title>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f0f7f0;
+            margin: 0;
+            padding: 0;
+        }
+
+        .header {
+            background: #1a7a3c;
+            color: white;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .container {
+            width: 700px;
+            margin: 30px auto;
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 0 12px rgba(0,0,0,0.15);
+        }
+
+        h2 {
+            color: #1a7a3c;
+            text-align: center;
+        }
+
+        label {
+            font-weight: bold;
+            margin-top: 12px;
+            display: block;
+        }
+
+        select, input {
+            width: 100%;
+            padding: 10px;
+            margin-top: 6px;
+            border-radius: 8px;
+            border: 1px solid #c8e6c9;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        button {
+            margin-top: 20px;
+            width: 100%;
+            padding: 14px;
+            background: #1a7a3c;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .result {
+            margin-top: 25px;
+            padding: 20px;
+            border-radius: 10px;
+            background: #e8f5e9;
+            display: none;
+            text-align: center;
+        }
+
+        .error {
+            background: #ffebee;
+            color: red;
+        }
+
+        .value {
+            font-size: 26px;
+            font-weight: bold;
+            color: #1a7a3c;
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="header">
+    <h1>💊 PharmaPrédict</h1>
+    <p>Prédiction journalière de demande des médicaments</p>
+</div>
+
+<div class="container">
+
+    <h2>Paramètres</h2>
+
+    <label>Médicament</label>
+    <select id="medicament">
+        <option value="M01AB">M01AB</option>
+        <option value="M01AE">M01AE</option>
+        <option value="N02BA">N02BA</option>
+        <option value="N02BE">N02BE</option>
+        <option value="N05B">N05B</option>
+        <option value="N05C">N05C</option>
+        <option value="R03">R03</option>
+        <option value="R06">R06</option>
+    </select>
+
+    <label>Date</label>
+    <input type="date" id="date">
+
+    <h2>Ventes des 7 derniers jours</h2>
+
+    <div class="grid">
+        <div>
+            <label>Vente J-1</label>
+            <input type="number" id="lag1" value="10">
+        </div>
+
+        <div>
+            <label>Vente J-2</label>
+            <input type="number" id="lag2" value="12">
+        </div>
+
+        <div>
+            <label>Vente J-3</label>
+            <input type="number" id="lag3" value="9">
+        </div>
+
+        <div>
+            <label>Vente J-4</label>
+            <input type="number" id="lag4" value="15">
+        </div>
+
+        <div>
+            <label>Vente J-5</label>
+            <input type="number" id="lag5" value="8">
+        </div>
+
+        <div>
+            <label>Vente J-6</label>
+            <input type="number" id="lag6" value="11">
+        </div>
+
+        <div>
+            <label>Vente J-7</label>
+            <input type="number" id="lag7" value="13">
+        </div>
+    </div>
+
+    <button onclick="predict()">🔍 Lancer la prédiction</button>
+
+    <div id="result" class="result"></div>
+
+</div>
+
+<script>
+async function predict() {
+    const resultDiv = document.getElementById("result");
+
+    const medicament = document.getElementById("medicament").value;
+    const dateValue = document.getElementById("date").value;
+
+    if (!dateValue) {
+        resultDiv.style.display = "block";
+        resultDiv.className = "result error";
+        resultDiv.innerHTML = "Veuillez choisir une date.";
+        return;
+    }
+
+    const date = new Date(dateValue);
+
+    const lag1 = Number(document.getElementById("lag1").value);
+    const lag2 = Number(document.getElementById("lag2").value);
+    const lag3 = Number(document.getElementById("lag3").value);
+    const lag4 = Number(document.getElementById("lag4").value);
+    const lag5 = Number(document.getElementById("lag5").value);
+    const lag6 = Number(document.getElementById("lag6").value);
+    const lag7 = Number(document.getElementById("lag7").value);
+
+    const rolling7 = (lag1 + lag2 + lag3 + lag4 + lag5 + lag6 + lag7) / 7;
+
+    const start = new Date(date.getFullYear(), 0, 0);
+    const dayofyear = Math.floor((date - start) / 86400000);
+
+    const data = {
+        medicament: medicament,
+        dayofweek: date.getDay(),
+        dayofmonth: date.getDate(),
+        month: date.getMonth() + 1,
+        year: date.getFullYear(),
+        dayofyear: dayofyear,
+        lag1: lag1,
+        lag2: lag2,
+        lag3: lag3,
+        lag4: lag4,
+        lag5: lag5,
+        lag6: lag6,
+        lag7: lag7,
+        rolling7: rolling7
+    };
+
+    try {
+        const response = await fetch("http://127.0.0.1:5000/predict", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify(data)
+        });
+
+        const result = await response.json();
+
+        if (result.erreur) {
+            resultDiv.style.display = "block";
+            resultDiv.className = "result error";
+            resultDiv.innerHTML = "Erreur : " + result.erreur;
+            return;
+        }
+
+        resultDiv.style.display = "block";
+        resultDiv.className = "result";
+        resultDiv.innerHTML = `
+            <h3>Résultat</h3>
+            <p>Médicament : <b>${result.medicament}</b></p>
+            <p>Ventes prévues :</p>
+            <div class="value">${result.ventes_prevues} unités</div>
+            <p>Stock minimum recommandé :</p>
+            <div class="value">${result.stock_minimum} unités</div>
+        `;
+
+    } catch (error) {
+        resultDiv.style.display = "block";
+        resultDiv.className = "result error";
+        resultDiv.innerHTML = "Erreur de connexion avec l'API.";
+    }
+}
+</script>
+
+</body>
+</html>
