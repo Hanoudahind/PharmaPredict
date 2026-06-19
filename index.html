@@ -185,16 +185,29 @@ async function predict() {
 
     const rolling7 = (lag1 + lag2 + lag3 + lag4 + lag5 + lag6 + lag7) / 7;
 
+    // Le formulaire ne demande que 7 jours, donc rolling14 et rolling30
+    // sont approximés avec rolling7 (limite acceptée du formulaire simplifié)
+    const rolling14 = rolling7;
+    const rolling30 = rolling7;
+
+    const mean = rolling7;
+    const variance = [lag1, lag2, lag3, lag4, lag5, lag6, lag7]
+        .reduce((acc, val) => acc + Math.pow(val - mean, 2), 0) / 7;
+    const std7 = Math.sqrt(variance);
+
     const start = new Date(date.getFullYear(), 0, 0);
     const dayofyear = Math.floor((date - start) / 86400000);
+    const dow = date.getDay();
+    const is_weekend = (dow === 0 || dow === 6) ? 1 : 0;
 
     const data = {
         medicament: medicament,
-        dayofweek: date.getDay(),
+        dayofweek: dow,
         dayofmonth: date.getDate(),
         month: date.getMonth() + 1,
         year: date.getFullYear(),
         dayofyear: dayofyear,
+        is_weekend: is_weekend,
         lag1: lag1,
         lag2: lag2,
         lag3: lag3,
@@ -202,7 +215,10 @@ async function predict() {
         lag5: lag5,
         lag6: lag6,
         lag7: lag7,
-        rolling7: rolling7
+        rolling7: rolling7,
+        rolling14: rolling14,
+        rolling30: rolling30,
+        std7: std7
     };
 
     try {

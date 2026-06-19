@@ -11,8 +11,9 @@ for col in cols:
     models[col] = joblib.load(f"models/model_{col}.pkl")
 
 feature_cols = [
-    "dayofweek", "dayofmonth", "month", "year", "dayofyear",
-    "lag1", "lag2", "lag3", "lag4", "lag5", "lag6", "lag7", "rolling7"
+    "dayofweek", "dayofmonth", "month", "year", "dayofyear", "is_weekend",
+    "lag1", "lag2", "lag3", "lag4", "lag5", "lag6", "lag7",
+    "rolling7", "rolling14", "rolling30", "std7"
 ]
 
 @app.route("/")
@@ -31,6 +32,7 @@ def predict():
             "month": data["month"],
             "year": data["year"],
             "dayofyear": data["dayofyear"],
+            "is_weekend": data["is_weekend"],
             "lag1": data["lag1"],
             "lag2": data["lag2"],
             "lag3": data["lag3"],
@@ -38,7 +40,10 @@ def predict():
             "lag5": data["lag5"],
             "lag6": data["lag6"],
             "lag7": data["lag7"],
-            "rolling7": data["rolling7"]
+            "rolling7": data["rolling7"],
+            "rolling14": data["rolling14"],
+            "rolling30": data["rolling30"],
+            "std7": data["std7"]
         }
 
         X = pd.DataFrame([row], columns=feature_cols)
