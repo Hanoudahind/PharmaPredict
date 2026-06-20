@@ -206,5 +206,6 @@ Predicts next-day demand for a given medication and returns a recommended minimu
 ## 👤 Author
 
 **Hind El Agy**
+**Manal El Kabchi**
 Master in Computer Science and Telecommunications
 Academic Project — Medication Demand Prediction and Restocking Recommendation API
